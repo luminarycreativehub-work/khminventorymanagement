@@ -1,0 +1,223 @@
+{
+  "entities": {
+    "Property": {
+      "title": "Property",
+      "description": "A real estate property inventory record managed within KHM Property Manager",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique Firestore document ID"
+        },
+        "propertyId": {
+          "type": "string",
+          "description": "Unique human-readable property inventory code (e.g., KHM-RES-101)",
+          "maxLength": 64
+        },
+        "title": {
+          "type": "string",
+          "description": "Marketing title or label for the property",
+          "maxLength": 200
+        },
+        "propertyType": {
+          "type": "string",
+          "description": "Category of property",
+          "enum": [
+            "Residential Plot",
+            "Commercial Plot",
+            "House",
+            "Apartment",
+            "Shop",
+            "Villa",
+            "Penthouse",
+            "Office",
+            "Warehouse",
+            "Farmhouse",
+            "Other"
+          ]
+        },
+        "projectName": {
+          "type": "string",
+          "description": "Project, development, or housing society name",
+          "maxLength": 150
+        },
+        "location": {
+          "type": "string",
+          "description": "City, sector, zone, or street address",
+          "maxLength": 250
+        },
+        "plotUnitNumber": {
+          "type": "string",
+          "description": "Plot, flat, unit, or shop number",
+          "maxLength": 80
+        },
+        "size": {
+          "type": "number",
+          "description": "Numeric measurement of area or size"
+        },
+        "sizeUnit": {
+          "type": "string",
+          "description": "Unit of measurement",
+          "enum": ["Square Yards", "Square Feet", "Marla", "Kanal", "Acres"]
+        },
+        "price": {
+          "type": "number",
+          "description": "Asking or listing price in primary currency"
+        },
+        "description": {
+          "type": "string",
+          "description": "Full property overview, amenities, or notes",
+          "maxLength": 3000
+        },
+        "images": {
+          "type": "array",
+          "description": "List of image download URLs or storage paths"
+        },
+        "status": {
+          "type": "string",
+          "description": "Inventory status of property",
+          "enum": ["Available", "Reserved", "Sold"]
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "Email address of user who created the record",
+          "maxLength": 150
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Email address of user who last updated the record",
+          "maxLength": 150
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp or server timestamp of creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp or server timestamp of last modification"
+        },
+        "reservationDetails": {
+          "type": "object",
+          "description": "Optional reservation record (client name, token amount, reserved date)"
+        },
+        "saleDetails": {
+          "type": "object",
+          "description": "Optional sale record (buyer name, final price, sale date)"
+        }
+      },
+      "required": [
+        "propertyId",
+        "title",
+        "propertyType",
+        "projectName",
+        "location",
+        "plotUnitNumber",
+        "size",
+        "sizeUnit",
+        "price",
+        "status"
+      ]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Audit trail logging inventory changes, reservations, sales, and restorations",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Document ID of the activity entry"
+        },
+        "userEmail": {
+          "type": "string",
+          "description": "Email of user performing the action",
+          "maxLength": 150
+        },
+        "propertyId": {
+          "type": "string",
+          "description": "Inventory property code affected",
+          "maxLength": 64
+        },
+        "propertyTitle": {
+          "type": "string",
+          "description": "Title of the property at event time",
+          "maxLength": 200
+        },
+        "previousStatus": {
+          "type": "string",
+          "description": "Status before modification"
+        },
+        "newStatus": {
+          "type": "string",
+          "description": "Status after modification"
+        },
+        "action": {
+          "type": "string",
+          "description": "Description of action (Created, Reserved, Sold, Restored, Updated)",
+          "maxLength": 100
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional remarks or buyer/client info",
+          "maxLength": 1000
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "ISO timestamp of event occurrence"
+        }
+      },
+      "required": [
+        "userEmail",
+        "propertyId",
+        "action",
+        "timestamp"
+      ]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authorized staff profile metadata",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address",
+          "maxLength": 150
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of team member",
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "description": "Staff role within organization",
+          "enum": ["Admin", "Manager", "Agent"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of registration"
+        }
+      },
+      "required": [
+        "email"
+      ]
+    }
+  },
+  "firestore": {
+    "/properties/{propertyDocId}": {
+      "schema": "Property",
+      "description": "Collection of all real estate inventory properties"
+    },
+    "/activity_logs/{activityDocId}": {
+      "schema": "ActivityLog",
+      "description": "Collection of real-time inventory audit logs and status changes"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Team member profiles and permissions"
+    }
+  }
+}

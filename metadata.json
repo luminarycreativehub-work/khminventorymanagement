@@ -1,0 +1,6 @@
+{
+  "name": "KHM Property Manager",
+  "description": "Professional mobile-first real estate inventory management application with real-time Firestore tracking, activity history, and multi-unit status controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

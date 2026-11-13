@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all unknown collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for Property entity
+    function isValidProperty(data) {
+      return data.keys().hasAll([
+        'propertyId', 'title', 'propertyType', 'projectName',
+        'location', 'plotUnitNumber', 'size', 'sizeUnit', 'price', 'status'
+      ]) &&
+      data.propertyId is string && data.propertyId.size() > 0 && data.propertyId.size() <= 64 &&
+      data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+      data.propertyType is string && data.propertyType.size() <= 60 &&
+      data.projectName is string && data.projectName.size() <= 150 &&
+      data.location is string && data.location.size() <= 250 &&
+      data.plotUnitNumber is string && data.plotUnitNumber.size() <= 80 &&
+      data.size is number && data.size > 0 &&
+      data.sizeUnit is string && data.sizeUnit.size() <= 40 &&
+      data.price is number && data.price >= 0 &&
+      data.status in ['Available', 'Reserved', 'Sold'] &&
+      (!('description' in data) || (data.description is string && data.description.size() <= 5000)) &&
+      (!('images' in data) || (data.images is list && data.images.size() <= 30));
+    }
+
+    // Validation for ActivityLog entity
+    function isValidActivityLog(data) {
+      return data.keys().hasAll(['userEmail', 'propertyId', 'action', 'timestamp']) &&
+      data.userEmail is string && data.userEmail.size() <= 150 &&
+      data.propertyId is string && data.propertyId.size() <= 64 &&
+      data.action is string && data.action.size() <= 100 &&
+      data.timestamp is string && data.timestamp.size() <= 60;
+    }
+
+    // Validation for UserProfile entity
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['email']) &&
+      data.email is string && data.email.size() <= 150;
+    }
+
+    // Match /properties/{propertyDocId}
+    match /properties/{propertyDocId} {
+      // Only authenticated users can read property inventory
+      allow read: if isSignedIn();
+
+      // Create new property: authenticated user, valid ID, valid schema
+      allow create: if isSignedIn() && isValidId(propertyDocId) && isValidProperty(incoming());
+
+      // Update property: authenticated user, valid schema
+      allow update: if isSignedIn() && isValidId(propertyDocId) && isValidProperty(incoming());
+
+      // Disallow deleting sold properties to protect inventory integrity
+      allow delete: if isSignedIn() && isValidId(propertyDocId) && existing().status != 'Sold';
+    }
+
+    // Match /activity_logs/{activityDocId}
+    match /activity_logs/{activityDocId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(activityDocId) && isValidActivityLog(incoming());
+      // Activity logs are immutable audit records
+      allow update, delete: if false;
+    }
+
+    // Match /users/{userId}
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || incoming().email == request.auth.token.email);
+      allow delete: if false;
+    }
+
+    // Match test connection probe
+    match /test/{docId} {
+      allow read: if true;
+    }
+  }
+}
